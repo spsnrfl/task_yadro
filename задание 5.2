@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <random>
+#include <complex>
+#include <fstream>
+
+// Функция для генерации случайных бит
+std::vector<bool> generateRandomBits(size_t length) {
+    std::vector<bool> bits(length);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::bernoulli_distribution dis(0.5);
+
+    for (size_t i = 0; i < length; ++i) {
+        bits[i] = dis(gen);
+    }
+
+    return bits;
+}
+
+// Предположим, что у вас есть функции для модуляции, добавления шума и демодуляции
+// Здесь используются заглушки для этих функций
+
+std::vector<std::complex<double>> modulateQAM(const std::vector<bool>& bits) {
+    // Заглушка для модуляции
+    return {};
+}
+
+std::vector<std::complex<double>> addGaussianNoise(const std::vector<std::complex<double>>& signal, double stddev) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<double> dis(0, stddev);
+
+    std::vector<std::complex<double>> noisySignal(signal.size());
+    for (size_t i = 0; i < signal.size(); ++i) {
+        noisySignal[i] = signal[i] + std::complex<double>(dis(gen), dis(gen));
+    }
+
+    return noisySignal;
+}
+
+std::vector<bool> demodulateQAM(const std::vector<std::complex<double>>& signal) {
+    // Заглушка для демодуляции
+    return {};
+}
+
+int main() {
+    std::vector<bool> bits = generateRandomBits(1000); // Генерация 1000 случайных бит
+
+    // Дисперсии шума для исследования
+    std::vector<double> noiseStddevs = {0.1, 0.2, 0.3, 0.4, 0.5};
+
+    std::ofstream outputFile("error_rates.csv");
+    outputFile << "NoiseStddev,ErrorRate\n";
+
+    for (double stddev : noiseStddevs) {
+        auto modulatedSignal = modulateQAM(bits);
+        auto noisySignal = addGaussianNoise(modulatedSignal, stddev);
+        auto demodulatedBits = demodulateQAM(noisySignal);
+
+        // Подсчет ошибок
+        size_t errors = 0;
+        for (size_t i = 0; i < bits.size(); ++i) {
+            if (bits[i] != demodulatedBits[i]) {
+                ++errors;
+            }
+        }
+
+        double errorRate = static_cast<double>(errors) / bits.size();
+        outputFile << stddev << "," << errorRate << "\n";
+    }
+
+    outputFile.close();
+    std::cout << "Data exported to error_rates.csv\n";
+
+    return 0;
+}
