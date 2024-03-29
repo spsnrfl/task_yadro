@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def simulate_error_rate_vs_noise_variance(bits, modulate, demodulate, noise_variances):
+    error_rates = []
+    
+    modulated_signal = modulate(bits)
+    
+    for variance in noise_variances:
+        noisy_signal = modulated_signal + np.random.normal(0, np.sqrt(variance), modulated_signal.shape)
+        
+        demodulated_bits = demodulate(noisy_signal)
+        
+        errors = np.sum(bits != demodulated_bits)
+        error_rate = errors / len(bits)
+        error_rates.append(error_rate)
+    
+    return noise_variances, error_rates
+
+bits = np.random.randint(0, 2, 1000)
+
+noise_variances = np.linspace(0.01, 1, 10)
+
+def modulate(bits):
+
+    return np.random.randn(len(bits)) + 1j * np.random.randn(len(bits))
+
+def demodulate(signal):
+
+    return np.random.randint(0, 2, len(signal))
+
+
+variances, error_rates = simulate_error_rate_vs_noise_variance(bits, modulate, demodulate, noise_variances)
+
+plt.figure(figsize=(10, 6))
+plt.plot(variances, error_rates, marker='o')
+plt.title('Вероятность ошибки на бит от дисперсии шума')
+plt.xlabel('Дисперсия шума')
+plt.ylabel('Вероятность ошибки на бит')
+plt.grid(True)
+plt.show()
