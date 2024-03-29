@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <complex>
+#include <random>
+#include <cmath>
+
+// Предположим, что классы QAMModulator и QAMNoiseAdder уже реализованы, как описано в предыдущих ответах
+
+class QAMModulator {
+public:
+    // Простой пример функции модуляции QPSK для демонстрации
+    std::vector<std::complex<double>> modulate(const std::vector<bool>& bits) {
+        std::vector<std::complex<double>> symbols;
+        for (size_t i = 0; i < bits.size(); i += 2) {
+            double real = bits[i] ? 1.0 : -1.0;
+            double imag = i + 1 < bits.size() && bits[i + 1] ? 1.0 : -1.0;
+            symbols.emplace_back(real, imag);
+        }
+        return symbols;
+    }
+};
+
+class QAMNoiseAdder {
+public:
+    QAMNoiseAdder(double stddev) : dist(0.0, stddev) {}
+
+    void addNoise(std::vector<std::complex<double>>& signal) {
+        for (std::complex<double>& s : signal) {
+            s += std::complex<double>(dist(gen), dist(gen));
+        }
+    }
+
+private:
+    std::default_random_engine gen;
+    std::normal_distribution<double> dist;
+};
+
+int main() {
+    // Шаг 1: Генерация случайной последовательности бит
+    std::vector<bool> bits(16);
+    std::default_random_engine generator;
+    std::bernoulli_distribution distribution(0.5);
+    for (bool& bit : bits) {
+        bit = distribution(generator);
+    }
+
+    // Шаг 2: Модуляция QPSK
+    QAMModulator modulator;
+    auto signal = modulator.modulate(bits);
+
+    // Шаг 3: Добавление гауссовского шума с разными значениями дисперсии
+    std::vector<double> stddevValues = {0.1, 0.5, 1.0}; // Примеры стандартных отклонений для шума
+    for (double stddev : stddevValues) {
+        QAMNoiseAdder noiseAdder(stddev);
+        auto noisySignal = signal; // Копируем сигнал, чтобы добавить шум
+        noiseAdder.addNoise(noisySignal);
+
+        std::cout << "Сигнал с шумом, стандартное отклонение = " << stddev << ":\n";
+        for (const auto& s : noisySignal) {
+            std::cout << s.real() << " + " << s.imag() << "i\n";
+        }
+        std::cout << std::endl;
+    }
+
+    return 0;
+}
