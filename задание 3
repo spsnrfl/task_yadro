@@ -1,0 +1,83 @@
+#include <iostream>
+#include <vector>
+#include <complex>
+#include <cmath>
+#include <limits>
+
+class QAMDemodulator {
+public:
+    enum Mode { QPSK, QAM16, QAM64 };
+
+    QAMDemodulator(Mode mode) : mode(mode) {}
+
+    std::vector<bool> demodulate(const std::vector<std::complex<double>>& symbols) {
+        switch (mode) {
+            case QPSK:
+                return demodulateQPSK(symbols);
+            case QAM16:
+                return demodulateQAM16(symbols);
+            case QAM64:
+                return demodulateQAM64(symbols);
+            default:
+                throw std::invalid_argument("Unsupported demodulation mode.");
+        }
+    }
+
+private:
+    Mode mode;
+
+    // QPSK демодуляция
+    std::vector<bool> demodulateQPSK(const std::vector<std::complex<double>>& symbols) {
+        std::vector<bool> bits;
+        for (auto& symbol : symbols) {
+            bits.push_back(real(symbol) > 0);
+            bits.push_back(imag(symbol) > 0);
+        }
+        return bits;
+    }
+
+    // QAM-16 демодуляция
+    std::vector<bool> demodulateQAM16(const std::vector<std::complex<double>>& symbols) {
+        return demodulateGeneric(symbols, 4);
+    }
+
+    // QAM-64 демодуляция
+    std::vector<bool> demodulateQAM64(const std::vector<std::complex<double>>& symbols) {
+        return demodulateGeneric(symbols, 6);
+    }
+
+    // Обобщённая демодуляция для QAM-16 и QAM-64
+    std::vector<bool> demodulateGeneric(const std::vector<std::complex<double>>& symbols, int bitsPerSymbol) {
+        std::vector<bool> bits;
+        // Примерная реализация
+        for (const auto& symbol : symbols) {
+            // Этот блок должен быть заменён на ваш алгоритм маппинга символов на биты
+            // в зависимости от вашей конкретной реализации QAM-16 или QAM-64
+            int mappedValue = mapSymbolToBits(symbol, bitsPerSymbol);
+            for (int i = bitsPerSymbol - 1; i >= 0; --i) {
+                bits.push_back((mappedValue >> i) & 1);
+            }
+        }
+        return bits;
+    }
+
+    // Пример функции маппинга символов на биты
+    int mapSymbolToBits(const std::complex<double>& symbol, int bitsPerSymbol) {
+        // Заглушка для демонстрации, должна быть реализована логика маппинга
+        return 0;
+    }
+};
+
+int main() {
+    // Пример использования
+    QAMDemodulator demodulator(QAMDemodulator::QAM16);
+    std::vector<std::complex<double>> symbols = {{0.707, 0.707}, {-0.707, 0.707}, {-0.707, -0.707}, {0.707, -0.707}};
+    auto bits = demodulator.demodulate(symbols);
+
+    for (bool bit : bits) {
+        std::cout << bit;
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
