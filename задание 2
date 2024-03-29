@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <complex>
+#include <random>
+
+class QAMNoiseAdder {
+public:
+    QAMNoiseAdder(double mean, double stddev) : dist(mean, stddev) {}
+
+    // Добавление шума к вектору комплексных чисел (сигналу QAM)
+    void addNoise(std::vector<std::complex<double>>& signal) {
+        for (std::complex<double>& s : signal) {
+            // Генерация гауссовского шума для реальной и мнимой частей
+            double noiseReal = dist(gen);
+            double noiseImag = dist(gen);
+
+            // Добавление шума к сигналу
+            s += std::complex<double>(noiseReal, noiseImag);
+        }
+    }
+
+private:
+    std::default_random_engine gen; // Генератор случайных чисел
+    std::normal_distribution<double> dist; // Нормальное распределение
+};
+
+int main() {
+    // Создание экземпляра класса с шумом с нулевым средним и стандартным отклонением 0.1
+    QAMNoiseAdder noiseAdder(0.0, 0.1);
+
+    // Пример сигнала QAM (созвездие QAM-16)
+    std::vector<std::complex<double>> signal = {
+        std::complex<double>(1.0, 1.0),
+        std::complex<double>(1.0, -1.0),
+        std::complex<double>(-1.0, 1.0),
+        std::complex<double>(-1.0, -1.0)
+    };
+
+    // Добавление шума к сигналу
+    noiseAdder.addNoise(signal);
+
+    // Вывод результата
+    for (const std::complex<double>& s : signal) {
+        std::cout << "Шумовой сигнал: " << s.real() << " + " << s.imag() << "i\n";
+    }
+
+    return 0;
+}
