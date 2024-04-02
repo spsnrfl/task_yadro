@@ -1,0 +1,72 @@
+function symbols = qpsk_modulate(bits)
+    % Проверка на чётность длины битового потока
+    assert(mod(length(bits), 2) == 0, 'Количество бит должно быть чётным');
+    
+    % Инициализация вектора символов
+    symbols = zeros(1, length(bits)/2);
+    
+    % QPSK модуляция
+    for i = 1:2:length(bits)
+        bit1 = bits(i);
+        bit2 = bits(i+1);
+        if bit1 == 0 && bit2 == 0
+            symbols((i+1)/2) = 1 + 1j;
+        elseif bit1 == 0 && bit2 == 1
+            symbols((i+1)/2) = -1 + 1j;
+        elseif bit1 == 1 && bit2 == 0
+            symbols((i+1)/2) = 1 - 1j;
+        else % bit1 == 1 && bit2 == 1
+            symbols((i+1)/2) = -1 - 1j;
+        end
+    end
+end
+
+function bits = qpsk_demodulate(symbols)
+    bits = zeros(1, 2*length(symbols));
+    
+    for i = 1:length(symbols)
+        symbol = symbols(i);
+        if real(symbol) > 0 && imag(symbol) > 0
+            bits(2*i-1:2*i) = [0 0];
+        elseif real(symbol) < 0 && imag(symbol) > 0
+            bits(2*i-1:2*i) = [0 1];
+        elseif real(symbol) > 0 && imag(symbol) < 0
+            bits(2*i-1:2*i) = [1 0];
+        else
+            bits(2*i-1:2*i) = [1 1];
+        end
+    end
+end
+
+function [SNRdB, BER] = calculate_ber_awgn(N, SNRdB)
+    bits = randi([0, 1], 1, N); % Генерация случайных бит
+    symbols = qpsk_modulate(bits); % Модуляция
+    
+    BER = zeros(size(SNRdB));
+    
+    for i = 1:length(SNRdB)
+        % Добавление AWGN
+        noiseVar = 10^(-SNRdB(i)/10);
+        noise = sqrt(noiseVar/2) * (randn(size(symbols)) + 1j*randn(size(symbols)));
+        noisySymbols = symbols + noise;
+        
+        % Демодуляция
+        rxBits = qpsk_demodulate(noisySymbols);
+        
+        % Расчёт BER
+        errors = sum(bits ~= rxBits);
+        BER(i) = errors/N;
+    end
+end
+
+N = 1e6; % Количество бит для моделирования
+SNRdB = 0:20; % Диапазон значений SNR в dB
+
+[SNRdB, BER] = calculate_ber_awgn(N, SNRdB);
+
+figure;
+semilogy(SNRdB, BER, 'b-o');
+grid on;
+title('Зависимость BER от SNR для QPSK модуляции');
+xlabel('SNR (dB)');
+ylabel('BER');
